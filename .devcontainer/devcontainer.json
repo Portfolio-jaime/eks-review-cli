@@ -1,0 +1,35 @@
+{
+  "name": "Go Development Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "go-app",
+  "workspaceFolder": "/go/src/app",
+  "features": {
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "enabled": true,
+      "kubectlVersion": "latest",
+      "helmVersion": "latest",
+      "kindVersion": "latest",
+      "minikubeVersion": "latest",
+      "minikubeDriver": "docker"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.useLanguageServer": true,
+        "go.toolsEnvVars": {
+          "GO111MODULE": "on"
+        }
+      },
+      "extensions": [
+        "golang.go",
+        "ms-vscode.go",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "remoteUser": "arheanja",
+  "runServices": [],
+  "shutdownAction": "none"
+}

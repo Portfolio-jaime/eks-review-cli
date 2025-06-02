@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  go-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/go/src/app
+      - ssh-data:/home/arheanja/.ssh
+      - minikube-data:/home/arheanja/.minikube
+      - docker-data:/var/lib/docker
+      - go-bin:/home/arheanja/go/bin
+      - go-mod:/home/arheanja/go/pkg/mod
+      - go-cache:/home/arheanja/.cache/go-build
+    working_dir: /go/src/app
+    ports:
+      - "8080:8080"
+    command: sleep infinity
+
+volumes:
+  ssh-data:
+  minikube-data:
+  docker-data:
+  go-bin:
+  go-mod:
+  go-cache:
