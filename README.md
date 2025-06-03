@@ -40,7 +40,7 @@ cd eks-review-cli
 ```bash
 go mod tidy
 ```
-Este comando descargará todas las librerías necesarias (Kubernetes client-go, AWS SDK v2, tablewriter, Cobra).
+Este comando descargará todas las librerías necesarias (Kubernetes client-go, Cobra, etc.).
 
 ### 3. Compilar la CLI
 
@@ -56,52 +56,18 @@ Esto creará un ejecutable llamado `eks-review` en el directorio actual.
 Asegúrate de que tu kubeconfig esté configurado correctamente para apuntar a tu clúster de Kubernetes (Minikube, EKS, GKE, etc.).  
 Por defecto, eks-review-cli leerá tu kubeconfig en `~/.kube/config`.
 
-### Estructura de Comandos
+Para una lista completa y detallada de todos los comandos, sus subcomandos y todas sus opciones, consulta la [Referencia de Comandos](./COMMANDS.md).
 
-```
-eks-review
-├── monitor               # Comandos para monitoreo y visibilidad
-│   ├── status            # Resumen del estado de recursos (Pods, Deployments, Services, Ingresses)
-│   ├── events            # Visualización de eventos del clúster
-│   ├── nodes             # Información detallada de los nodos del clúster
-│   └── logs              # Acceso a logs de contenedores
-├── security              # Seguridad y compliance (Planificado)
-├── optimize              # Optimización y costos (Planificado)
-└── diagnose              # Diagnóstico de problemas (Planificado)
-```
-
-### Ejemplos de Comandos
+### Ejemplos Rápidos
 
 Ver el estado de los recursos en el namespace actual/por defecto:
 ```bash
 ./eks-review monitor status
 ```
 
-Ver el estado de los recursos en un namespace específico:
-```bash
-./eks-review monitor status -n kube-system
-```
-
-Ver el estado de los recursos en todos los namespaces:
-```bash
-./eks-review monitor status --all-namespaces
-# o
-./eks-review monitor status -A
-```
-
-Ver los eventos recientes en el namespace actual/por defecto:
-```bash
-./eks-review monitor events
-```
-
-Ver los eventos de tipo 'Warning' en el namespace my-app:
+Ver los eventos de tipo 'Warning' en el namespace `my-app`:
 ```bash
 ./eks-review monitor events -n my-app --type Warning
-```
-
-Ver todos los eventos en todos los namespaces:
-```bash
-./eks-review monitor events -n all
 ```
 
 Ver información detallada de los nodos:
@@ -109,14 +75,14 @@ Ver información detallada de los nodos:
 ./eks-review monitor nodes
 ```
 
-Ver logs de un pod específico:
-```bash
-./eks-review monitor logs --pod my-pod-name -n my-namespace
-```
-
 Seguir los logs de un deployment:
 ```bash
 ./eks-review monitor logs --deployment my-deployment -f
+```
+
+Para obtener ayuda sobre un comando específico y sus flags:
+```bash
+./eks-review [comando] [subcomando] --help
 ```
 
 ---
@@ -136,6 +102,7 @@ eks-review-cli/
 │   ├── security.go     # Comandos de seguridad
 │   ├── status.go       # Implementación de 'monitor status'
 │   └── utils.go        # Funciones de utilidad
+├── COMMANDS.md         # Referencia Detallada de Comandos
 ├── go.mod              # Definición del módulo Go y dependencias
 ├── go.sum              # Sumas de verificación de dependencias
 ├── main.go             # Punto de entrada de la aplicación
@@ -159,26 +126,17 @@ graph TD
     A --> G(diagnose)
 
     subgraph "Comandos de Monitorización"
-        C["monitor status"]
-        D["monitor events"]
-        H["monitor nodes"]
-        I["monitor logs"]
-    end
-
-    subgraph "Funcionalidades Planificadas"
-        E["security"]
-        F["optimize"]
-        G["diagnose"]
+        C
+        D
+        H
+        I
     end
 
     style E fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style F fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style G fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef planned fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-    linkStyle default stroke:#333,stroke-width:2px;
 ```
-
-> Los nodos de color con línea discontinua (security, optimize, diagnose) representan funcionalidades planificadas.
+> Los nodos marcados con línea discontinua representan funcionalidades planificadas.
 
 ---
 
@@ -186,3 +144,5 @@ graph TD
 
 ¡Las contribuciones son bienvenidas!  
 Si tienes ideas para nuevas características, mejoras o correcciones de errores, no dudes en abrir un issue o enviar un pull request.
+
+---
