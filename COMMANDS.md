@@ -163,6 +163,31 @@ Este documento proporciona una lista completa de comandos para probar la herrami
         ./eks-review monitor logs --help
         ```
 
+### 5. `eks-review monitor get <recurso> [nombre]`
+* Descripción: Muestra uno o más recursos por tipo, similar a `kubectl get`.
+* **Uso general:**
+    ```bash
+    eks-review monitor get <recurso> [nombre] [flags]
+    ```
+* **Recursos soportados y flags comunes:**
+    * `pods` (`po`)
+    * `services` (`svc`)
+    * `daemonsets` (`ds`)
+    * `jobs` (`job`)
+    * `cronjobs` (`cj`)
+    * `namespaces` (`ns`)
+    * `serviceaccounts` (`sa`)
+* **Flags comunes:**
+    * `-n, --namespace <namespace>`
+        * Descripción: Namespace para listar recursos.
+    * `-A, --all-namespaces`
+        * Descripción: Todos los namespaces.
+    * `-l, --selector <label_selector>`
+        * Descripción: Selector (label query) para filtrar recursos.
+    * `-o, --output <formato>`
+        * Descripción: Formato de salida: `wide`, `json`, `yaml`.
+    * *Nota: El recurso `namespaces` no usa `-n` ni `-A`.*
+
 ---
 
 ## Subcomandos Planificados (Placeholders)
@@ -191,6 +216,16 @@ Estos comandos existen pero solo imprimirán un mensaje indicando que han sido l
     ./eks-review diagnose
     ./eks-review diagnose --help
     ```
+
+---
+
+## Ayuda
+
+Para obtener ayuda sobre cualquier comando o subcomando, ejecuta:
+
+```bash
+eks-review [comando] [subcomando] --help
+```
 
 ---
 

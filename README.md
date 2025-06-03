@@ -8,19 +8,28 @@
 
 **eks-review-cli** es una herramienta de línea de comandos (CLI) escrita en Go, diseñada para simplificar la revisión y el diagnóstico de recursos en clústeres de Kubernetes, con un enfoque especial en Amazon EKS. Su objetivo es automatizar tareas repetitivas, estandarizar flujos de trabajo y proporcionar una visión rápida y clara del estado y la configuración de tus recursos de Kubernetes.
 
-Actualmente, la CLI se enfoca en el subcomando `monitor`, permitiendo a los usuarios obtener un resumen del estado de los recursos clave (`status`), visualizar los eventos del clúster (`events`), obtener detalles de los nodos (`nodes`) y acceder a los logs de los pods (`logs`).
+La CLI ofrece un conjunto de comandos bajo `monitor` para obtener información detallada de varios recursos del clúster, visualizar eventos, acceder a logs y más.
 
 ---
 
 ## ✨ Características
 
-- **monitor status:** Resumen tabular del estado de Pods, Deployments, Services e Ingresses.
-- **monitor events:** Visualización de eventos recientes del clúster, con opciones de filtrado por tipo y namespace.
-- **monitor nodes:** Información detallada de los nodos, incluyendo estado, roles, versiones y uso de recursos (si el servidor de métricas está disponible).
-- **monitor logs:** Acceso y filtrado de logs de Pods, Deployments o Services.
-- **security** *(Planificado):* Auditoría de Network Policies, RBAC, imágenes de contenedores y Secrets.
-- **optimize** *(Planificado):* Identificación de recursos no utilizados y revisión de autoescalado.
-- **diagnose** *(Planificado):* Diagnóstico de problemas en Pods, Services e Ingresses.
+- **`monitor status`:** Resumen tabular del estado general de Pods, Deployments, Services e Ingresses.
+- **`monitor events`:** Visualización de eventos recientes del clúster, con opciones de filtrado por tipo y namespace.
+- **`monitor nodes`:** Información detallada de los nodos, incluyendo estado, roles, versiones y uso de recursos.
+- **`monitor logs`:** Acceso y filtrado de logs de Pods, Deployments o Services.
+- **`monitor get <recurso>`:** Permite listar de forma detallada diversos tipos de recursos como:
+    - `pods` (alias `po`)
+    - `services` (alias `svc`)
+    - `daemonsets` (alias `ds`)
+    - `jobs` (alias `job`)
+    - `cronjobs` (alias `cj`)
+    - `namespaces` (alias `ns`)
+    - `serviceaccounts` (alias `sa`)
+    - Con opciones de filtrado por namespace, selector de etiquetas y formatos de salida (tabla, wide, json, yaml).
+- **`security`** *(Planificado):* Auditoría de Network Policies, RBAC, imágenes de contenedores y Secrets.
+- **`optimize`** *(Planificado):* Identificación de recursos no utilizados y revisión de autoescalado.
+- **`diagnose`** *(Planificado):* Diagnóstico de problemas en Pods, Services e Ingresses.
 
 ---
 
@@ -40,6 +49,7 @@ cd eks-review-cli
 ```bash
 go mod tidy
 ```
+
 Este comando descargará todas las librerías necesarias (Kubernetes client-go, Cobra, etc.).
 
 ### 3. Compilar la CLI
@@ -47,43 +57,30 @@ Este comando descargará todas las librerías necesarias (Kubernetes client-go, 
 ```bash
 go build -o eks-review
 ```
+
 Esto creará un ejecutable llamado `eks-review` en el directorio actual.
 
----
-
-## 💡 Uso
-
+💡 **Uso**  
 Asegúrate de que tu kubeconfig esté configurado correctamente para apuntar a tu clúster de Kubernetes (Minikube, EKS, GKE, etc.).  
 Por defecto, eks-review-cli leerá tu kubeconfig en `~/.kube/config`.
 
-Para una lista completa y detallada de todos los comandos, sus subcomandos y todas sus opciones, consulta la [Referencia de Comandos](./COMMANDS.md).
+Para una lista completa y detallada de todos los comandos, sus subcomandos y todas sus opciones, por favor consulta la Referencia de Comandos en [COMMANDS.md](./COMMANDS.md).
 
-### Ejemplos Rápidos
+---
 
-Ver el estado de los recursos en el namespace actual/por defecto:
-```bash
-./eks-review monitor status
-```
+## ⚙️ Instalación Avanzada (Acceso Global como `kcli`)
 
-Ver los eventos de tipo 'Warning' en el namespace `my-app`:
-```bash
-./eks-review monitor events -n my-app --type Warning
-```
+Por defecto, después de compilar con `go build -o kcli`, puedes ejecutar la herramienta desde el directorio del proyecto con `./kcli`.
 
-Ver información detallada de los nodos:
-```bash
-./eks-review monitor nodes
-```
+Si deseas poder ejecutar `kcli` desde cualquier ubicación en tu terminal, necesitarás instalar el binario en un directorio que esté en tu `PATH` del sistema.
 
-Seguir los logs de un deployment:
-```bash
-./eks-review monitor logs --deployment my-deployment -f
-```
+Para instrucciones detalladas sobre cómo compilar con el nombre `kcli` e instalarlo globalmente en diferentes sistemas operativos, consulta nuestra [Guía de Instalación Avanzada](INSTALLATION_ADVANCED.md).
 
-Para obtener ayuda sobre un comando específico y sus flags:
-```bash
-./eks-review [comando] [subcomando] --help
-```
+---
+
+## 🗺️ Roadmap y Diferencial
+
+**Para ver el roadmap de funcionalidades y el enfoque diferencial de este proyecto, consulta [ROADMAP_DIFERENCIAL.md](./ROADMAP_DIFERENCIAL.md).**
 
 ---
 
@@ -92,21 +89,31 @@ Para obtener ayuda sobre un comando específico y sus flags:
 ```
 eks-review-cli/
 ├── cmd/
-│   ├── diagnose.go     # Comandos de diagnóstico
-│   ├── events.go       # Implementación de 'monitor events'
-│   ├── logs.go         # Implementación de 'monitor logs'
-│   ├── monitor.go      # Comando base 'monitor'
-│   ├── nodes.go        # Implementación de 'monitor nodes'
-│   ├── optimize.go     # Comandos de optimización
-│   ├── root.go         # Comando raíz de la CLI
-│   ├── security.go     # Comandos de seguridad
-│   ├── status.go       # Implementación de 'monitor status'
-│   └── utils.go        # Funciones de utilidad
-├── COMMANDS.md         # Referencia Detallada de Comandos
-├── go.mod              # Definición del módulo Go y dependencias
-├── go.sum              # Sumas de verificación de dependencias
-├── main.go             # Punto de entrada de la aplicación
-├── README.md           # Este archivo
+│   ├── diagnose.go
+│   ├── events.go
+│   ├── get.go
+│   ├── get_pods.go
+│   ├── get_services.go
+│   ├── get_daemonsets.go
+│   ├── get_jobs.go
+│   ├── get_cronjobs.go
+│   ├── get_namespaces.go
+│   ├── get_serviceaccounts.go
+│   ├── logs.go
+│   ├── monitor.go
+│   ├── nodes.go
+│   ├── optimize.go
+│   ├── root.go
+│   ├── security.go
+│   ├── status.go
+│   └── utils.go
+├── COMMANDS.md
+├── go.mod
+├── go.sum
+├── main.go
+├── README.md
+├── ROADMAP_DIFERENCIAL.md
+├── INSTALLATION_ADVANCED.md
 └── (otros archivos de configuración o scripts)
 ```
 
@@ -117,26 +124,48 @@ eks-review-cli/
 ```mermaid
 graph TD
     A[eks-review] --> B(monitor)
-    B --> C(status)
-    B --> D(events)
-    B --> H(nodes)
-    B --> I(logs)
-    A --> E(security)
-    A --> F(optimize)
-    A --> G(diagnose)
+    B --> C["status"]
+    B --> D["events"]
+    B --> H["nodes"]
+    B --> I["logs"]
+    B --> J(get)
+    J --> K["pods (po)"]
+    J --> L["services (svc)"]
+    J --> M["daemonsets (ds)"]
+    J --> N["jobs (job)"]
+    J --> O["cronjobs (cj)"]
+    J --> P["namespaces (ns)"]
+    J --> Q["serviceaccounts (sa)"]
+    A --> E["security (P)"]
+    A --> F["optimize (P)"]
+    A --> G["diagnose (P)"]
 
     subgraph "Comandos de Monitorización"
         C
         D
         H
         I
+        J
     end
 
     style E fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style F fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style G fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
 ```
-> Los nodos marcados con línea discontinua representan funcionalidades planificadas.
+
+> **Nota:** Los nodos marcados con (P) o con línea discontinua representan funcionalidades planificadas.
+
+---
+
+## 🛠️ Herramientas Incluidas
+
+[![kubectl](https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png)](https://kubernetes.io/docs/reference/kubectl/)
+[![Helm](https://raw.githubusercontent.com/helm/helm/main/docs/static/img/helm.svg)](https://helm.sh/)
+[![Docker](https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png)](https://www.docker.com/)
+
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+- [Helm](https://helm.sh/)
+- [Docker](https://www.docker.com/)
 
 ---
 
@@ -144,5 +173,3 @@ graph TD
 
 ¡Las contribuciones son bienvenidas!  
 Si tienes ideas para nuevas características, mejoras o correcciones de errores, no dudes en abrir un issue o enviar un pull request.
-
----
