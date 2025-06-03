@@ -5,53 +5,40 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	// "path/filepath" // No necesario aquí
 	"strings"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	// "k8s.io/client-go/kubernetes" // Se obtiene de GetKubeClients
-	// "k8s.io/client-go/tools/clientcmd" // Se usa en GetKubeClients y GetEffectiveNamespace
-	// "k8s.io/client-go/util/homedir" // Se usa en GetKubeClients y GetEffectiveNamespace
 )
 
-// ... (variables de flags logPodName, logDeploymentName, etc. se mantienen) ...
-// var (
-// 	logPodName        string
-// 	logDeploymentName string
-// 	logServiceName    string
-// 	logNamespace      string
-// 	logContainerName  string
-// 	logFollow         bool
-// 	logPrevious       bool
-// 	logGrep           string
-// 	logTail           int64
-// )
+// Variables para las flags del comando logs
+var (
+	logPodName        string
+	logDeploymentName string
+	logServiceName    string
+	logNamespace      string
+	logContainerName  string
+	logFollow         bool
+	logPrevious       bool
+	logGrep           string // Corregido de logGrelp si era un typo
+	logTail           int64
+)
 
-// logsCmd representa el comando 'monitor logs'
 var logsCmd = &cobra.Command{
 	Use:   "logs",
 	Short: "Imprime los logs de un contenedor en un pod, deployment o servicio.",
 	Long: `Imprime los logs de un contenedor en un pod, deployment o servicio.
-...(resto de la descripción larga y ejemplos sin cambios)...`,
+...(ejemplos)...`,
 	Run: func(cmd *cobra.Command, args []string) {
-		clients := GetKubeClients() // 1. Obtener clientes
+		clients := GetKubeClients() // Llama a la versión que sale en error
 
-		// 2. Determinar el namespace
-		// Para logs, allNamespacesFlag es false, commandAllowsAllString es false (no usa "all" como valor especial)
 		effectiveLogNamespace := GetEffectiveNamespace(logNamespace, false, "default", false)
-		// Actualizar logNamespace para usar el valor resuelto internamente si es necesario,
-		// o simplemente usar effectiveLogNamespace en las llamadas a la API.
-		// Por consistencia con el resto del código, asignémoslo a logNamespace si cambió.
-		if logNamespace == "" && effectiveLogNamespace == "default" {
-			// Opcional: Imprimir mensaje si se usa el default y no se especificó nada
-			// fmt.Fprintf(os.Stdout, "No se especificó namespace para logs. Usando namespace '%s'.\n", effectiveLogNamespace)
-		}
-		// Usaremos 'effectiveLogNamespace' para las llamadas a la API.
 
-		// Validar que solo una fuente de Pod esté especificada (sin cambios)
+		if logNamespace == "" && effectiveLogNamespace == "default" {
+			// Opcional: fmt.Fprintf(os.Stdout, "No se especificó namespace para logs. Usando namespace '%s'.\n", effectiveLogNamespace)
+		}
+
 		sourceCount := 0
 		if logPodName != "" {
 			sourceCount++
@@ -73,16 +60,13 @@ var logsCmd = &cobra.Command{
 		}
 
 		var targetPodNames []string
-
-		// Lógica para obtener Pods basada en la bandera proporcionada
 		if logPodName != "" {
 			targetPodNames = []string{logPodName}
 		} else if logDeploymentName != "" {
-			if Verbose { // 3. Usar Verbose
+			if Verbose {
 				fmt.Printf("DEBUG: Recuperando logs para Deployment '%s' en namespace '%s'...\n", logDeploymentName, effectiveLogNamespace)
 			}
 			deployment, err := clients.Core.AppsV1().Deployments(effectiveLogNamespace).Get(context.TODO(), logDeploymentName, metav1.GetOptions{})
-			// ... (resto de la lógica de deployment sin cambios, usando clients.Core y effectiveLogNamespace) ...
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error obteniendo deployment '%s': %v\n", logDeploymentName, err)
 				os.Exit(1)
@@ -105,11 +89,10 @@ var logsCmd = &cobra.Command{
 				targetPodNames = append(targetPodNames, p.Name)
 			}
 		} else if logServiceName != "" {
-			if Verbose { // Usar Verbose
+			if Verbose {
 				fmt.Printf("DEBUG: Recuperando logs para Service '%s' en namespace '%s'...\n", logServiceName, effectiveLogNamespace)
 			}
 			service, err := clients.Core.CoreV1().Services(effectiveLogNamespace).Get(context.TODO(), logServiceName, metav1.GetOptions{})
-			// ... (resto de la lógica de service sin cambios, usando clients.Core y effectiveLogNamespace) ...
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error obteniendo service '%s': %v\n", logServiceName, err)
 				os.Exit(1)
@@ -134,9 +117,7 @@ var logsCmd = &cobra.Command{
 		}
 
 		logOptions := &corev1.PodLogOptions{
-			Follow:    logFollow,
-			Previous:  logPrevious,
-			Container: logContainerName,
+			Follow: logFollow, Previous: logPrevious, Container: logContainerName,
 		}
 		if logTail > 0 {
 			logOptions.TailLines = &logTail
@@ -166,14 +147,71 @@ var logsCmd = &cobra.Command{
 	},
 }
 
-// init() y LineScanner se mantienen igual...
-// func init() {
-// 	monitorCmd.AddCommand(logsCmd)
-// 	logsCmd.Flags().StringVar(&logPodName, "pod", "", "Nombre del pod del que obtener logs.")
-// 	// ... resto de las flags
-// }
-// type LineScanner struct { ... }
-// func NewLineScanner(r io.Reader) *LineScanner { ... }
-// func (s *LineScanner) Scan() bool { ... }
-// func (s *LineScanner) Text() string { ... }
-// func (s *LineScanner) Err() error { ... }
+func init() {
+	monitorCmd.AddCommand(logsCmd)
+	logsCmd.Flags().StringVar(&logPodName, "pod", "", "Nombre del pod del que obtener logs.")
+	logsCmd.Flags().StringVar(&logDeploymentName, "deployment", "", "Nombre del deployment del que obtener logs.")
+	logsCmd.Flags().StringVar(&logServiceName, "service", "", "Nombre del service del que obtener logs.")
+	logsCmd.Flags().StringVarP(&logNamespace, "namespace", "n", "", "Si está presente, el ámbito del namespace para esta solicitud CLI.")
+	logsCmd.Flags().StringVarP(&logContainerName, "container", "c", "", "Nombre del contenedor.")
+	logsCmd.Flags().BoolVarP(&logFollow, "follow", "f", false, "Especificar si los logs deben ser transmitidos.")
+	logsCmd.Flags().BoolVarP(&logPrevious, "previous", "p", false, "Si es true, imprime los logs de la instancia previa del contenedor.")
+	logsCmd.Flags().StringVar(&logGrep, "grep", "", "Filtrar logs por una cadena de texto.")
+	logsCmd.Flags().Int64Var(&logTail, "tail", -1, "Líneas desde el final de los logs a mostrar.")
+}
+
+// LineScanner y sus métodos (deben estar aquí)
+type LineScanner struct { /* ... */
+	reader io.Reader
+	buf    []byte
+	err    error
+	eof    bool
+}
+
+func NewLineScanner(r io.Reader) *LineScanner {
+	return &LineScanner{reader: r, buf: make([]byte, 0, 4*1024)}
+}
+func (s *LineScanner) Scan() bool {
+	if s.err != nil || s.eof {
+		return false
+	}
+	for {
+		n, readErr := s.reader.Read(s.buf[len(s.buf):cap(s.buf)])
+		if n > 0 {
+			s.buf = s.buf[:len(s.buf)+n]
+		}
+		if lineEnd := strings.IndexByte(string(s.buf), '\n'); lineEnd >= 0 {
+			s.err = nil
+			return true
+		}
+		if readErr == io.EOF {
+			s.eof = true
+			if len(s.buf) > 0 {
+				s.err = nil
+				return true
+			}
+			s.err = io.EOF
+			return false
+		}
+		if readErr != nil {
+			s.err = readErr
+			return false
+		}
+		if len(s.buf) == cap(s.buf) {
+			newBuf := make([]byte, len(s.buf), len(s.buf)*2)
+			copy(newBuf, s.buf)
+			s.buf = newBuf
+		}
+	}
+}
+func (s *LineScanner) Text() string {
+	if lineEnd := strings.IndexByte(string(s.buf), '\n'); lineEnd >= 0 {
+		line := s.buf[:lineEnd]
+		s.buf = s.buf[lineEnd+1:]
+		return string(line)
+	}
+	line := s.buf
+	s.buf = s.buf[:0]
+	return string(line)
+}
+func (s *LineScanner) Err() error { return s.err }
