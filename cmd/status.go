@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings" // Importa para strings.Join
 
-	"github.com/olekukonko/tablewriter" // Importa la librería para tablas
-	"github.com/spf13/cobra"            // Para Deployments
-	// Para Pods y Services
-	// Para Ingresses
+	// "path/filepath" // No necesario aquí
+	"strings"
+	"time" // Necesario para age
+
+	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	// "k8s.io/client-go/kubernetes" // Se obtiene de GetKubeClients
+	// "k8s.io/client-go/tools/clientcmd" // Se usa en GetKubeClients y GetEffectiveNamespace
+	// "k8s.io/client-go/util/homedir" // Se usa en GetKubeClients y GetEffectiveNamespace
 )
 
 var allNamespaces bool
@@ -23,227 +23,175 @@ var targetNamespace string
 // statusCmd representa el comando 'monitor status'
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Provides a quick summary of resource states.",
-	Long: `The status command retrieves a summary of Pods, Deployments, Services,
-Ingresses, and Persistent Volumes in a given namespace or across all namespaces.`,
+	Short: "Proporciona un resumen rápido del estado de los recursos.",
+	Long: `El comando status recupera un resumen de Pods, Deployments, Services,
+Ingresses en un namespace dado o en todos los namespaces.`, // Eliminé PVs ya que no se listan actualmente
 	Run: func(cmd *cobra.Command, args []string) {
-		// Construir la ruta al kubeconfig
-		kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
+		clients := GetKubeClients() // 1. Obtener clientes
 
-		// Cargar la configuración de Kubernetes
-		config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error building kubeconfig: %v\n", err)
-			os.Exit(1)
+		fmt.Println("Recuperando estado de recursos de Kubernetes...")
+
+		// 2. Determinar el namespace
+		// Para status, allNamespacesFlag es la variable 'allNamespaces', commandAllowsAllString es false.
+		namespaceToList := GetEffectiveNamespace(targetNamespace, allNamespaces, "default", false)
+
+		if !allNamespaces && targetNamespace == "" && namespaceToList == "default" {
+			fmt.Fprintf(os.Stdout, "No se especificó namespace. Usando namespace '%s'. Use -n <namespace> o -A / --all-namespaces.\n", namespaceToList)
+		} else if allNamespaces {
+			fmt.Fprintln(os.Stdout, "Recuperando estado de recursos de todos los namespaces.")
+		} else if namespaceToList != "" {
+			fmt.Fprintf(os.Stdout, "Recuperando estado de recursos del namespace '%s'.\n", namespaceToList)
 		}
 
-		// Crear un cliente de Kubernetes
-		clientset, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating Kubernetes client: %v\n", err)
-			os.Exit(1)
-		}
-
-		fmt.Println("Fetching Kubernetes resource status...")
-
-		// Determinar el namespace objetivo
-		var namespaceToList string
-		if allNamespaces {
-			namespaceToList = "" // Una cadena vacía significa todos los namespaces
-		} else if targetNamespace != "" {
-			namespaceToList = targetNamespace
-		} else {
-			// Si no se especifica --all-namespaces ni -n, intenta obtener el namespace del contexto actual
-			rawConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-				&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
-				&clientcmd.ConfigOverrides{},
-			).RawConfig()
-			if err == nil && rawConfig.CurrentContext != "" {
-				currentContext := rawConfig.Contexts[rawConfig.CurrentContext]
-				if currentContext.Namespace != "" {
-					namespaceToList = currentContext.Namespace
-				}
-			}
-			if namespaceToList == "" {
-				namespaceToList = "default" // Por defecto a "default" si no se encuentra un namespace en el contexto
-				fmt.Printf("No namespace specified. Using '%s' namespace. Use -n <namespace> or --all-namespaces.\n", namespaceToList)
-			}
-		}
-
-		// --- Listado de Pods ---
-		listPods(clientset, namespaceToList)
-
-		// --- Listado de Deployments ---
-		listDeployments(clientset, namespaceToList)
-
-		// --- Listado de Services ---
-		listServices(clientset, namespaceToList)
-
-		// --- Listado de Ingresses ---
-		listIngresses(clientset, namespaceToList)
-
-		// TODO: Puedes añadir Persistent Volumes, StatefulSets, DaemonSets, etc. siguiendo el mismo patrón.
+		// Pasar clients.Core a las funciones de listado
+		listPods(clients.Core, namespaceToList)
+		listDeployments(clients.Core, namespaceToList)
+		listServices(clients.Core, namespaceToList)
+		listIngresses(clients.Core, namespaceToList)
 	},
 }
 
-// init function for the status command
 func init() {
 	monitorCmd.AddCommand(statusCmd)
-
-	// Define las banderas (flags) para el comando status
-	statusCmd.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "If true, list the requested object(s) across all namespaces.")
-	statusCmd.Flags().StringVarP(&targetNamespace, "namespace", "n", "", "If present, the namespace scope for this CLI request.")
+	statusCmd.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "Si es true, lista el/los objeto(s) solicitado(s) en todos los namespaces.")
+	statusCmd.Flags().StringVarP(&targetNamespace, "namespace", "n", "", "Si está presente, el ámbito del namespace para esta solicitud CLI.")
 }
 
-// listPods function to get and display pod status
-func listPods(clientset *kubernetes.Clientset, namespace string) {
+// Modificar las funciones listX para aceptar kubernetes.Interface y usar Verbose
+func listPods(clientset kubernetes.Interface, namespace string) {
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error listing pods: %v\n", err)
-		// No salir, para que otros listados puedan continuar
+		fmt.Fprintf(os.Stderr, "Error listando pods: %v\n", err)
 		return
 	}
 
-	fmt.Println("\n--- Pods ---")
+	fmt.Fprintln(os.Stdout, "\n--- Pods ---")
 	if len(pods.Items) == 0 {
-		fmt.Println("No pods found.")
+		fmt.Fprintln(os.Stdout, "No se encontraron pods.")
 	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"NAME", "NAMESPACE", "STATUS", "RESTARTS", "AGE"})
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
+		headers := []string{"NOMBRE", "NAMESPACE", "ESTADO", "REINICIOS", "EDAD"}
+		rows := make([][]string, 0, len(pods.Items))
+
+		if Verbose { // 3. Usar Verbose
+			fmt.Fprintf(os.Stdout, "DEBUG: Pods encontrados: %d\n", len(pods.Items))
+		}
 
 		for _, pod := range pods.Items {
 			restarts := 0
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				restarts += int(containerStatus.RestartCount)
 			}
-			age := metav1.Now().Sub(pod.CreationTimestamp.Time).Round(0).String()
+			age := metav1.Now().Sub(pod.CreationTimestamp.Time).Truncate(time.Second).String() // Usar Truncate
 
-			table.Append([]string{pod.Name, pod.Namespace, string(pod.Status.Phase), fmt.Sprintf("%d", restarts), age})
+			rows = append(rows, []string{pod.Name, pod.Namespace, string(pod.Status.Phase), fmt.Sprintf("%d", restarts), age})
 		}
-		table.Render()
+		PrintBasicTable(headers, rows)
 	}
 }
 
-// listDeployments function to get and display deployment status
-func listDeployments(clientset *kubernetes.Clientset, namespace string) {
+func listDeployments(clientset kubernetes.Interface, namespace string) {
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error listing deployments: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error listando deployments: %v\n", err)
 		return
 	}
 
-	fmt.Println("\n--- Deployments ---")
+	fmt.Fprintln(os.Stdout, "\n--- Deployments ---")
 	if len(deployments.Items) == 0 {
-		fmt.Println("No deployments found.")
+		fmt.Fprintln(os.Stdout, "No se encontraron deployments.")
 	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"})
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
+		headers := []string{"NOMBRE", "NAMESPACE", "LISTOS", "ACTUALIZADOS", "DISPONIBLES", "EDAD"}
+		rows := make([][]string, 0, len(deployments.Items))
+
+		if Verbose { // Usar Verbose
+			fmt.Fprintf(os.Stdout, "DEBUG: Deployments encontrados: %d\n", len(deployments.Items))
+		}
 
 		for _, deploy := range deployments.Items {
-			ready := fmt.Sprintf("%d/%d", deploy.Status.Replicas-deploy.Status.UnavailableReplicas, deploy.Status.Replicas)
+			ready := fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Spec.Replicas) // Usar ReadyReplicas y Spec.Replicas
 			upToDate := fmt.Sprintf("%d", deploy.Status.UpdatedReplicas)
 			available := fmt.Sprintf("%d", deploy.Status.AvailableReplicas)
-			age := metav1.Now().Sub(deploy.CreationTimestamp.Time).Round(0).String()
+			age := metav1.Now().Sub(deploy.CreationTimestamp.Time).Truncate(time.Second).String() // Usar Truncate
 
-			table.Append([]string{deploy.Name, deploy.Namespace, ready, upToDate, available, age})
+			rows = append(rows, []string{deploy.Name, deploy.Namespace, ready, upToDate, available, age})
 		}
-		table.Render()
+		PrintBasicTable(headers, rows)
 	}
 }
 
-// listServices function to get and display service status
-func listServices(clientset *kubernetes.Clientset, namespace string) {
+func listServices(clientset kubernetes.Interface, namespace string) {
 	services, err := clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error listing services: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error listando services: %v\n", err)
 		return
 	}
 
-	fmt.Println("\n--- Services ---")
+	fmt.Fprintln(os.Stdout, "\n--- Services ---")
 	if len(services.Items) == 0 {
-		fmt.Println("No services found.")
+		fmt.Fprintln(os.Stdout, "No se encontraron services.")
 	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"NAME", "NAMESPACE", "TYPE", "CLUSTER-IP", "EXTERNAL-IP", "PORTS", "AGE"})
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
+		headers := []string{"NOMBRE", "NAMESPACE", "TIPO", "CLUSTER-IP", "IP-EXTERNA", "PUERTO(S)", "EDAD"}
+		rows := make([][]string, 0, len(services.Items))
+
+		if Verbose { // Usar Verbose
+			fmt.Fprintf(os.Stdout, "DEBUG: Services encontrados: %d\n", len(services.Items))
+		}
 
 		for _, svc := range services.Items {
-			clusterIP := svc.Spec.ClusterIP
-			externalIP := "<none>"
-			if len(svc.Status.LoadBalancer.Ingress) > 0 {
-				ips := []string{}
-				for _, ingress := range svc.Status.LoadBalancer.Ingress {
-					if ingress.IP != "" {
-						ips = append(ips, ingress.IP)
-					} else if ingress.Hostname != "" {
-						ips = append(ips, ingress.Hostname)
+			externalIP := "<none>" // Default a <none> si no hay IP externa
+			if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+				if len(svc.Status.LoadBalancer.Ingress) > 0 {
+					externalIP = svc.Status.LoadBalancer.Ingress[0].IP
+					if externalIP == "" { // A veces es Hostname en lugar de IP
+						externalIP = svc.Status.LoadBalancer.Ingress[0].Hostname
 					}
+				} else {
+					externalIP = "<pending>" // Si es LoadBalancer pero aún no tiene IP
 				}
-				if len(ips) > 0 {
-					externalIP = strings.Join(ips, ", ")
-				}
+			} else if len(svc.Spec.ExternalIPs) > 0 {
+				externalIP = strings.Join(svc.Spec.ExternalIPs, ",")
 			}
 
 			ports := []string{}
 			for _, port := range svc.Spec.Ports {
-				ports = append(ports, fmt.Sprintf("%d:%d/%s", port.Port, port.NodePort, port.Protocol))
+				ports = append(ports, fmt.Sprintf("%d:%d/%s", port.Port, port.NodePort, port.Protocol)) // Incluir NodePort si existe
 			}
-			portsStr := strings.Join(ports, ",")
-			if portsStr == "" {
-				portsStr = "<none>"
-			}
+			age := metav1.Now().Sub(svc.CreationTimestamp.Time).Truncate(time.Second).String() // Usar Truncate
 
-			age := metav1.Now().Sub(svc.CreationTimestamp.Time).Round(0).String()
-
-			table.Append([]string{svc.Name, svc.Namespace, string(svc.Spec.Type), clusterIP, externalIP, portsStr, age})
+			rows = append(rows, []string{svc.Name, svc.Namespace, string(svc.Spec.Type), svc.Spec.ClusterIP, externalIP, strings.Join(ports, ", "), age})
 		}
-		table.Render()
+		PrintBasicTable(headers, rows)
 	}
 }
 
-// listIngresses function to get and display ingress status
-func listIngresses(clientset *kubernetes.Clientset, namespace string) {
+func listIngresses(clientset kubernetes.Interface, namespace string) {
 	ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error listing ingresses: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error listando ingresses: %v\n", err)
 		return
 	}
 
-	fmt.Println("\n--- Ingresses ---")
+	fmt.Fprintln(os.Stdout, "\n--- Ingresses ---")
 	if len(ingresses.Items) == 0 {
-		fmt.Println("No ingresses found.")
+		fmt.Fprintln(os.Stdout, "No se encontraron ingresses.")
 	} else {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"NAME", "NAMESPACE", "CLASS", "HOSTS", "ADDRESS", "PORTS", "AGE"})
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
+		headers := []string{"NOMBRE", "NAMESPACE", "CLASE", "HOSTS", "DIRECCIÓN", "PUERTOS", "EDAD"} // Agregué PUERTOS
+		rows := make([][]string, 0, len(ingresses.Items))
 
-		for _, ing := range ingresses.Items {
-			ingressClass := "<none>"
-			if ing.Spec.IngressClassName != nil {
-				ingressClass = *ing.Spec.IngressClassName
-			}
+		if Verbose { // Usar Verbose
+			fmt.Fprintf(os.Stdout, "DEBUG: Ingresses encontrados: %d\n", len(ingresses.Items))
+		}
 
-			hosts := []string{}
-			for _, rule := range ing.Spec.Rules {
-				if rule.Host != "" {
-					hosts = append(hosts, rule.Host)
-				}
-			}
-			hostsStr := strings.Join(hosts, ",")
-			if hostsStr == "" {
-				hostsStr = "*" // Default for ingresses with no specific host rules
-			}
+		for _, ingress := range ingresses.Items {
+			address := "<none>"
+			ports := "" // Para Ingress, los puertos suelen ser 80, 443 implícitos o definidos en el Ingress Controller.
+			// Esta información es más compleja de obtener de forma genérica desde el objeto Ingress en sí.
+			// Podrías mostrar "80, 443" o dejarlo como N/A.
+			// Por ahora, lo dejaré simple.
 
-			address := "<pending>"
-			if len(ing.Status.LoadBalancer.Ingress) > 0 {
+			if len(ingress.Status.LoadBalancer.Ingress) > 0 {
 				ips := []string{}
-				for _, ingStatus := range ing.Status.LoadBalancer.Ingress {
+				for _, ingStatus := range ingress.Status.LoadBalancer.Ingress {
 					if ingStatus.IP != "" {
 						ips = append(ips, ingStatus.IP)
 					} else if ingStatus.Hostname != "" {
@@ -251,23 +199,31 @@ func listIngresses(clientset *kubernetes.Clientset, namespace string) {
 					}
 				}
 				if len(ips) > 0 {
-					address = strings.Join(ips, ", ")
+					address = strings.Join(ips, ",")
+				} else {
+					address = "<pending>"
 				}
 			}
 
-			// Common Ingress ports are 80 and 443
-			ports := "80"
-			for _, tls := range ing.Spec.TLS {
-				if len(tls.Hosts) > 0 {
-					ports = "80, 443" // If TLS is configured, assume 443 is also open
-					break
-				}
+			hosts := []string{}
+			for _, rule := range ingress.Spec.Rules {
+				hosts = append(hosts, rule.Host)
 			}
+			className := ""
+			if ingress.Spec.IngressClassName != nil {
+				className = *ingress.Spec.IngressClassName
+			}
+			age := metav1.Now().Sub(ingress.CreationTimestamp.Time).Truncate(time.Second).String() // Usar Truncate
 
-			age := metav1.Now().Sub(ing.CreationTimestamp.Time).Round(0).String()
+			// Para los puertos del Ingress: típicamente 80/443, gestionado por el Ingress Controller
+			// Aquí asumiremos los más comunes o lo dejaremos vacío.
+			// Podrías mostrar "http/https" o algo similar si lo deseas.
+			// Para simplificar, usaré "80, 443" como placeholder.
+			// O puedes intentar obtenerlo de las reglas si definen backends con puertos, aunque es más complejo.
+			portStr := "80, 443" // Placeholder
 
-			table.Append([]string{ing.Name, ing.Namespace, ingressClass, hostsStr, address, ports, age})
+			rows = append(rows, []string{ingress.Name, ingress.Namespace, className, strings.Join(hosts, ", "), address, portStr, age})
 		}
-		table.Render()
+		PrintBasicTable(headers, rows)
 	}
 }

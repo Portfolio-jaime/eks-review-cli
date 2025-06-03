@@ -1,6 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2025 Jaime Henao <jaimehenao8126@outlook.com>
 */
 package main
 
