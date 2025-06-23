@@ -1,4 +1,3 @@
-// cmd/get_daemonsets.go
 package cmd
 
 import (
