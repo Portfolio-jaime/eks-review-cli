@@ -62,7 +62,7 @@ Esto creará un ejecutable llamado `eks-review` en el directorio actual.
 
 💡 **Uso**  
 Asegúrate de que tu kubeconfig esté configurado correctamente para apuntar a tu clúster de Kubernetes (Minikube, EKS, GKE, etc.).  
-Por defecto, eks-review-cli leerá tu kubeconfig en `~/.kube/config`.
+Por defecto, `eks-review` leerá tu kubeconfig en `~/.kube/config`.
 
 Para una lista completa y detallada de todos los comandos, sus subcomandos y todas sus opciones, por favor consulta la Referencia de Comandos en [COMMANDS.md](./COMMANDS.md).
 
