@@ -1,4 +1,3 @@
-// cmd/get_jobs.go
 package cmd
 
 import (

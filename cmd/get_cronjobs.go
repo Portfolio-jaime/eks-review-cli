@@ -1,4 +1,3 @@
-// cmd/get_cronjobs.go
 package cmd
 
 import (

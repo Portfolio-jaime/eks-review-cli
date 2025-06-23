@@ -1,4 +1,3 @@
-// cmd/get_serviceaccounts.go
 package cmd
 
 import (

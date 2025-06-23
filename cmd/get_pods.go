@@ -1,4 +1,3 @@
-// cmd/get_pods.go
 package cmd
 
 import (
