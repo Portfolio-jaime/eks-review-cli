@@ -162,9 +162,9 @@ graph TD
 
 ## 🛠️ Included Tools
 
-[![kubectl](https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png)](https://kubernetes.io/docs/reference/kubectl/)
-[![Helm](https://raw.githubusercontent.com/helm/helm/main/docs/static/img/helm.svg)](https://helm.sh/)
-[![Docker](https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png)](https://www.docker.com/)
+[![kubectl](docs/assets/kubectl.svg)](https://kubernetes.io/docs/reference/kubectl/)
+[![Helm](docs/assets/helm.svg)](https://helm.sh/)
+[![Docker](docs/assets/docker.svg)](https://www.docker.com/)
 
 - [kubectl](https://kubernetes.io/docs/reference/kubectl/)
 - [Helm](https://helm.sh/)
