@@ -75,7 +75,7 @@ By default after `go build -o eks-review` you can run the tool with `./eks-revie
 
 If you want to run `eks-review` from anywhere, install the binary in a directory that is in your system `PATH`.
 
-For detailed instructions on building with the name `eks-review` and installing it globally, see the [Advanced Installation Guide](INSTALLATION_ADVANCED.md) *(Spanish only).* 
+Move the resulting `eks-review` binary to a directory included in your system `PATH` (for example `/usr/local/bin` on Linux or macOS, or a custom directory added to the `PATH` on Windows).
 
 ---
 
@@ -108,16 +108,12 @@ eks-review-cli/
 │   ├── security.go
 │   ├── status.go
 │   └── utils.go
-├── COMMANDS.md
 ├── COMMANDS.en.md
 ├── go.mod
 ├── go.sum
 ├── main.go
-├── README.md
 ├── README.en.md
-├── ROADMAP_DIFERENCIAL.md
-├── ROADMAP_DIFFERENTIAL.md
-└── INSTALLATION_ADVANCED.md
+└── ROADMAP_DIFFERENTIAL.md
 ```
 
 ---
