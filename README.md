@@ -52,6 +52,11 @@ go mod tidy
 
 Este comando descargará todas las librerías necesarias (Kubernetes client-go, Cobra, etc.).
 
+> **Nota:** Tanto `go mod tidy` como `go test` requieren acceso a internet para
+> descargar las dependencias. Ejecuta estos comandos en un entorno con
+> conectividad de red o asegúrate de que la caché de módulos de Go esté
+> pre-poblada.
+
 ### 3. Compilar la CLI
 
 ```bash
