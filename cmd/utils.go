@@ -114,15 +114,15 @@ func PrintBasicTable(headers []string, rows [][]string) {
 	for i, h := range headers {
 		headerArgs[i] = h
 	}
-	fmt.Printf(formatString, headerArgs...)
-	fmt.Printf(separator)
+	fmt.Print(fmt.Sprintf(formatString, headerArgs...))
+	fmt.Print(separator)
 
 	for _, row := range rows {
 		rowArgs := make([]interface{}, len(row))
 		for i, cell := range row {
 			rowArgs[i] = cell
 		}
-		fmt.Printf(formatString, rowArgs...)
+		fmt.Print(fmt.Sprintf(formatString, rowArgs...))
 	}
 	fmt.Println()
 }
