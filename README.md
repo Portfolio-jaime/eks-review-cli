@@ -68,13 +68,13 @@ Para una lista completa y detallada de todos los comandos, sus subcomandos y tod
 
 ---
 
-## ⚙️ Instalación Avanzada (Acceso Global como `kcli`)
+## ⚙️ Instalación Avanzada (Acceso Global como `eks-review`)
 
-Por defecto, después de compilar con `go build -o kcli`, puedes ejecutar la herramienta desde el directorio del proyecto con `./kcli`.
+Por defecto, después de compilar con `go build -o eks-review`, puedes ejecutar la herramienta desde el directorio del proyecto con `./eks-review`.
 
-Si deseas poder ejecutar `kcli` desde cualquier ubicación en tu terminal, necesitarás instalar el binario en un directorio que esté en tu `PATH` del sistema.
+Si deseas poder ejecutar `eks-review` desde cualquier ubicación en tu terminal, necesitarás instalar el binario en un directorio que esté en tu `PATH` del sistema.
 
-Para instrucciones detalladas sobre cómo compilar con el nombre `kcli` e instalarlo globalmente en diferentes sistemas operativos, consulta nuestra [Guía de Instalación Avanzada](INSTALLATION_ADVANCED.md).
+Para instrucciones detalladas sobre cómo compilar con el nombre `eks-review` e instalarlo globalmente en diferentes sistemas operativos, consulta nuestra [Guía de Instalación Avanzada](INSTALLATION_ADVANCED.md).
 
 ---
 
