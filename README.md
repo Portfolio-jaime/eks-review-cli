@@ -65,7 +65,7 @@ This creates an executable named `eks-review` in the current directory.
 💡 **Usage**
 Make sure your kubeconfig is configured correctly so it points to your cluster (Minikube, EKS, GKE, etc.). By default `eks-review` reads `~/.kube/config`.
 
-For a complete list of commands, subcommands and flags, see [the Commands Reference](./COMMANDS.en.md).
+For a complete list of commands, subcommands and flags, see [the Commands Reference](./COMMANDS.md).
 
 ---
 
@@ -109,13 +109,10 @@ eks-review-cli/
 │   ├── status.go
 │   └── utils.go
 ├── COMMANDS.md
-├── COMMANDS.en.md
 ├── go.mod
 ├── go.sum
 ├── main.go
 ├── README.md
-├── README.en.md
-├── ROADMAP_DIFERENCIAL.md
 ├── ROADMAP_DIFFERENTIAL.md
 └── INSTALLATION_ADVANCED.md
 ```
