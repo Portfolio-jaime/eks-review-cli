@@ -1,4 +1,4 @@
-# eks-review-cli
+# eks-review
 
 **Herramienta de Revisión de Clústeres de Kubernetes (EKS)**
 
@@ -6,7 +6,7 @@
 
 ## 📖 Visión General
 
-**eks-review-cli** es una herramienta de línea de comandos (CLI) escrita en Go, diseñada para simplificar la revisión y el diagnóstico de recursos en clústeres de Kubernetes, con un enfoque especial en Amazon EKS. Su objetivo es automatizar tareas repetitivas, estandarizar flujos de trabajo y proporcionar una visión rápida y clara del estado y la configuración de tus recursos de Kubernetes.
+**eks-review** es una herramienta de línea de comandos (CLI) escrita en Go, diseñada para simplificar la revisión y el diagnóstico de recursos en clústeres de Kubernetes, con un enfoque especial en Amazon EKS. Su objetivo es automatizar tareas repetitivas, estandarizar flujos de trabajo y proporcionar una visión rápida y clara del estado y la configuración de tus recursos de Kubernetes.
 
 La CLI ofrece un conjunto de comandos bajo `monitor` para obtener información detallada de varios recursos del clúster, visualizar eventos, acceder a logs y más.
 

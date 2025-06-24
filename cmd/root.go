@@ -12,8 +12,8 @@ var Verbose bool // Exportada para ser accesible por otros archivos del paquete 
 var rootCmd = &cobra.Command{
 	Use:   "eks-review",
 	Short: "Una herramienta CLI para revisar clústeres de EKS.",
-	Long: `eks-review-cli es una herramienta de línea de comandos (CLI) escrita en Go, 
-diseñada para simplificar la revisión y el diagnóstico de recursos en clústeres de Kubernetes, 
+	Long: `eks-review es una herramienta de línea de comandos (CLI) escrita en Go,
+diseñada para simplificar la revisión y el diagnóstico de recursos en clústeres de Kubernetes,
 con un enfoque especial en Amazon EKS.`,
 }
 
