@@ -30,7 +30,10 @@ var podsGetCmd = &cobra.Command{
 	Long: `Lista uno o más pods en el namespace actual o en todos los namespaces.
 Puedes especificar un nombre de pod opcional para listar solo ese pod.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients() // Obtiene clientes, maneja os.Exit en error
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 
 		listOptions := metav1.ListOptions{
 			LabelSelector: podsSelector,
@@ -45,7 +48,6 @@ Puedes especificar un nombre de pod opcional para listar solo ese pod.`,
 
 		var podList *corev1.PodList
 		var singlePod *corev1.Pod
-		var err error
 
 		if len(args) > 0 { // Si se especifica un nombre de pod
 			podName := args[0]

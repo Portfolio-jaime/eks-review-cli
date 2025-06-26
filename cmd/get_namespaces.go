@@ -25,12 +25,14 @@ var namespacesGetCmd = &cobra.Command{
 	Aliases: []string{"ns"},
 	Short:   "Lista uno o más namespaces",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients()
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 		listOptions := metav1.ListOptions{LabelSelector: namespacesSelector}
 
 		var nsList *corev1.NamespaceList
 		var singleNS *corev1.Namespace
-		var err error
 
 		if len(args) > 0 {
 			nsName := args[0]

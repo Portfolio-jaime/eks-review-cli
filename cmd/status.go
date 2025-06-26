@@ -22,7 +22,11 @@ var statusCmd = &cobra.Command{
 	Long: `El comando status recupera un resumen de Pods, Deployments, Services,
 e Ingresses en un namespace dado o en todos los namespaces.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		clients := GetKubeClients() // Llama a la versión que sale en error
+		clients, err := GetKubeClients()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando clientes de Kubernetes: %v\n", err)
+			os.Exit(1)
+		}
 
 		fmt.Println("Recuperando estado de recursos de Kubernetes...")
 		namespaceToList := GetEffectiveNamespace(targetNamespace, allNamespaces, "default", false)
