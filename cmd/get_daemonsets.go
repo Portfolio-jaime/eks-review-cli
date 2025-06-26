@@ -27,7 +27,10 @@ var daemonsetsGetCmd = &cobra.Command{
 	Short:   "Lista uno o más daemonsets",
 	Long:    `Lista uno o más daemonsets en el namespace actual o en todos los namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients()
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 		listOptions := metav1.ListOptions{LabelSelector: daemonsetsSelector}
 		effectiveNamespace := GetEffectiveNamespace(daemonsetsNamespace, daemonsetsAllNamespaces, "default", false)
 		if daemonsetsAllNamespaces {
@@ -36,7 +39,6 @@ var daemonsetsGetCmd = &cobra.Command{
 
 		var dsList *appsv1.DaemonSetList
 		var singleDS *appsv1.DaemonSet
-		var err error
 
 		if len(args) > 0 {
 			dsName := args[0]
