@@ -19,7 +19,11 @@ var nodesCmd = &cobra.Command{
 los nodos del clúster de Kubernetes, incluyendo su estado, roles y uso de recursos.
 El uso de recursos requiere un servidor de métricas instalado en el clúster.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		clients := GetKubeClients() // Llama a la versión que sale en error
+		clients, err := GetKubeClients()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando clientes de Kubernetes: %v\n", err)
+			os.Exit(1)
+		}
 
 		fmt.Fprintln(os.Stdout, "Recuperando información de nodos de Kubernetes...")
 
