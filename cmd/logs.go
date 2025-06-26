@@ -31,7 +31,11 @@ var logsCmd = &cobra.Command{
 	Long: `Imprime los logs de un contenedor en un pod, deployment o servicio.
 ...(ejemplos)...`,
 	Run: func(cmd *cobra.Command, args []string) {
-		clients := GetKubeClients() // Llama a la versión que sale en error
+		clients, err := GetKubeClients()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando clientes de Kubernetes: %v\n", err)
+			os.Exit(1)
+		}
 
 		effectiveLogNamespace := GetEffectiveNamespace(logNamespace, false, "default", false)
 

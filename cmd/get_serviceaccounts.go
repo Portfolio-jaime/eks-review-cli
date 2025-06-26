@@ -26,7 +26,10 @@ var serviceaccountsGetCmd = &cobra.Command{
 	Aliases: []string{"sa"},
 	Short:   "Lista uno o más serviceaccounts",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients()
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 		listOptions := metav1.ListOptions{LabelSelector: saSelector}
 		effectiveNamespace := GetEffectiveNamespace(saNamespace, saAllNamespaces, "default", false)
 		if saAllNamespaces {
@@ -35,7 +38,6 @@ var serviceaccountsGetCmd = &cobra.Command{
 
 		var saList *corev1.ServiceAccountList
 		var singleSA *corev1.ServiceAccount
-		var err error
 
 		if len(args) > 0 {
 			saName := args[0]

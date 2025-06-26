@@ -26,7 +26,10 @@ var cronjobsGetCmd = &cobra.Command{
 	Aliases: []string{"cj"},
 	Short:   "Lista uno o más cronjobs",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients()
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 		// CronJobs no son filtrables por label selector directamente a nivel de lista de CronJob,
 		// pero lo mantenemos por consistencia si se implementa un filtro custom.
 		listOptions := metav1.ListOptions{LabelSelector: cronjobsSelector}
@@ -37,7 +40,6 @@ var cronjobsGetCmd = &cobra.Command{
 
 		var cjList *batchv1.CronJobList
 		var singleCJ *batchv1.CronJob
-		var err error
 
 		if len(args) > 0 {
 			cjName := args[0]

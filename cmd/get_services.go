@@ -27,7 +27,10 @@ var servicesGetCmd = &cobra.Command{
 	Short:   "Lista uno o más services",
 	Long:    `Lista uno o más services en el namespace actual o en todos los namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clients := GetKubeClients()
+		clients, err := GetKubeClients()
+		if err != nil {
+			return fmt.Errorf("creando clientes de Kubernetes: %w", err)
+		}
 		listOptions := metav1.ListOptions{LabelSelector: servicesSelector}
 		effectiveNamespace := GetEffectiveNamespace(servicesNamespace, servicesAllNamespaces, "default", false)
 		if servicesAllNamespaces {
@@ -36,7 +39,6 @@ var servicesGetCmd = &cobra.Command{
 
 		var serviceList *corev1.ServiceList
 		var singleService *corev1.Service
-		var err error
 
 		if len(args) > 0 {
 			serviceName := args[0]

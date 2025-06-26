@@ -21,7 +21,11 @@ var eventsCmd = &cobra.Command{
 	Long: `El comando events recupera y muestra eventos recientes de Kubernetes,
 útiles para la resolución de problemas. Puedes filtrar por tipo (Warning, Normal) y namespace.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		clients := GetKubeClients() // Llama a la versión que sale en error
+		clients, err := GetKubeClients()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando clientes de Kubernetes: %v\n", err)
+			os.Exit(1)
+		}
 
 		fmt.Fprintln(os.Stdout, "Recuperando eventos de Kubernetes...")
 
