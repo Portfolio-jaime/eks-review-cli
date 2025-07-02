@@ -20,22 +20,19 @@ type KubeClients struct {
 }
 
 // GetKubeClients inicializa y devuelve los clientes core y de métricas de Kubernetes.
-// Sale del programa si la creación del cliente core falla.
-// La creación del cliente de métricas es opcional; se imprime una advertencia si falla.
-// Esta versión maneja os.Exit() internamente y devuelve solo *KubeClients.
-func GetKubeClients() *KubeClients {
+// Devuelve un error en lugar de finalizar el programa para permitir un mejor manejo
+// de fallos y facilitar las pruebas unitarias de los comandos.
+func GetKubeClients() (*KubeClients, error) {
 	kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error construyendo kubeconfig: %v\n", err)
-		os.Exit(1) // Sale internamente
+		return nil, fmt.Errorf("construyendo kubeconfig: %w", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creando cliente de Kubernetes: %v\n", err)
-		os.Exit(1) // Sale internamente
+		return nil, fmt.Errorf("creando cliente de Kubernetes: %w", err)
 	}
 
 	var metricsClientset metrics.Interface
@@ -49,7 +46,7 @@ func GetKubeClients() *KubeClients {
 	return &KubeClients{
 		Core:    clientset,
 		Metrics: metricsClientset,
-	}
+	}, nil
 }
 
 // GetEffectiveNamespace determina el namespace a utilizar.
